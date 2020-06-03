@@ -1,5 +1,8 @@
 # ChangeLog
 
+## Version 5.2.29 (June 3rd, 2020)
+* **SECURITY** Fix insufficient output escaping bug in file attachment names. CVE-2020-13625.
+
 ## Version 5.2.28 (March 19th, 2020)
 * Avoid deprecation notices in recent PHP versions
 

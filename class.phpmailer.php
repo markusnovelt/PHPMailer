@@ -31,7 +31,7 @@ class PHPMailer
      * The PHPMailer Version number.
      * @var string
      */
-    public $Version = '5.2.28';
+    public $Version = '5.2.29';
 
     /**
      * Email priority.
@@ -2620,9 +2620,9 @@ class PHPMailer
                 //Only include a filename property if we have one
                 if (!empty($name)) {
                     $mime[] = sprintf(
-                        'Content-Type: %s; name="%s"%s',
+                        'Content-Type: %s; name=%s%s',
                         $type,
-                        $this->encodeHeader($this->secureHeader($name)),
+                        static::quotedString($this->encodeHeader($this->secureHeader($name))),
                         $this->LE
                     );
                 } else {
@@ -2647,28 +2647,19 @@ class PHPMailer
                 // Allow for bypassing the Content-Disposition header totally
                 if (!(empty($disposition))) {
                     $encoded_name = $this->encodeHeader($this->secureHeader($name));
-                    if (preg_match('/[ \(\)<>@,;:\\"\/\[\]\?=]/', $encoded_name)) {
+                    if (!empty($encoded_name)) {
                         $mime[] = sprintf(
-                            'Content-Disposition: %s; filename="%s"%s',
+                            'Content-Disposition: %s; filename=%s%s',
                             $disposition,
-                            $encoded_name,
+                            static::quotedString($encoded_name),
                             $this->LE . $this->LE
                         );
                     } else {
-                        if (!empty($encoded_name)) {
-                            $mime[] = sprintf(
-                                'Content-Disposition: %s; filename=%s%s',
-                                $disposition,
-                                $encoded_name,
-                                $this->LE . $this->LE
-                            );
-                        } else {
-                            $mime[] = sprintf(
-                                'Content-Disposition: %s%s',
-                                $disposition,
-                                $this->LE . $this->LE
-                            );
-                        }
+                        $mime[] = sprintf(
+                            'Content-Disposition: %s%s',
+                            $disposition,
+                            $this->LE . $this->LE
+                        );
                     }
                 } else {
                     $mime[] = $this->LE;
@@ -3970,6 +3961,28 @@ class PHPMailer
     {
         //+2 to include CRLF line break for a 1000 total
         return (boolean)preg_match('/^(.{'.(self::MAX_LINE_LENGTH + 2).',})/m', $str);
+    }
+
+    /**
+     * If a string contains any "special" characters, double-quote the name,
+     * and escape any double quotes with a backslash.
+     *
+     * @param string $str
+     *
+     * @return string
+     *
+     * @see RFC822 3.4.1
+     */
+    public static function quotedString($str)
+    {
+        if (preg_match('/[ ()<>@,;:"\/\[\]?=]/', $str)) {
+            //If the string contains any of these chars, it must be double-quoted
+            //and any double quotes must be escaped with a backslash
+            return '"' . str_replace('"', '\\"', $str) . '"';
+        }
+
+        //Return the string untouched, it doesn't need quoting
+        return $str;
     }
 
     /**
